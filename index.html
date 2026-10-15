@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1728">
+  <meta name="description" content="1~1024번이 동일한 확률인 공정한 돌림판. 1회, 10회, 100회, 1024회 자동 추첨과 짝수·홀수 통계.">
+  <title>1024 공정 돌림판 | 홀짝 통계</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1728;--panel:#15273c;--line:#36516a;--text:#f1f8ff;--muted:#a6bfd1;--mint:#75ecd7;--pink:#d4a2ff;--even:#70e9d7;--odd:#be9cfb}
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(ellipse 80% 60% at 25% 25%,#1a4554 0%,#10243a 53%,#0b1728 100%);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+    button{font:inherit;cursor:pointer}
+    button:focus-visible,a:focus-visible{outline:3px solid #fff5a5;outline-offset:3px}
+    button:disabled{opacity:.5;cursor:wait}
+    .shell{max-width:1180px;margin:auto;padding:28px 20px 34px}
+    .eyebrow{font-size:12px;letter-spacing:.19em;color:var(--mint);font-weight:850;margin-bottom:8px}
+    h1{font-size:clamp(30px,4.5vw,44px);letter-spacing:-.045em;margin:0 0 8px}
+    .subtitle{color:var(--muted);margin:0;line-height:1.65;font-size:14px}
+    .grid{display:grid;grid-template-columns:minmax(0,1.17fr) minmax(328px,.83fr);align-items:start;gap:22px;margin-top:23px}
+    .wheel-card{border:1px solid #ffffff20;border-radius:26px;background:linear-gradient(150deg,#183c4b90,#101d31a0);padding:19px 18px 18px;box-shadow:0 20px 55px #02091749;min-width:0}
+    .wheel-stage{position:relative;aspect-ratio:1;max-width:585px;margin:auto;overflow:hidden}
+    #wheel{display:block;width:100%;height:100%;transform-origin:50% 50%;will-change:transform}
+    .pointer{position:absolute;z-index:3;top:1%;left:50%;transform:translateX(-50%);width:0;height:0;border-left:17px solid transparent;border-right:17px solid transparent;border-top:47px solid #ff5871;filter:drop-shadow(0 3px 2px #0b1623)}
+    .pointer:before{content:"";position:absolute;top:-50px;left:-10px;width:20px;height:8px;background:#ffe7ed;border-radius:7px}
+    .live{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;margin-top:5px;border:1px solid #ffffff24;border-radius:14px;background:#091a2b}
+    .live span{font-size:13px;color:var(--muted)}
+    .live strong{font-size:36px;font-variant-numeric:tabular-nums;color:var(--mint)}
+    .note{font-size:12px;line-height:1.75;color:#a9bfcc;margin:14px 7px 0}
+    .side{display:flex;flex-direction:column;gap:13px;min-width:0}
+    .result{border:1px solid #52b8ad63;border-radius:22px;background:linear-gradient(120deg,#1d4453,#20354d 70%,#19283e);text-align:center;padding:15px 16px 13px}
+    .result-label{font-size:13px;font-weight:800;color:#c4e6e8}
+    .winning{font-size:clamp(58px,8vw,84px);line-height:1.2;font-weight:900;color:var(--mint);letter-spacing:-.06em;font-variant-numeric:tabular-nums;min-height:84px}
+    .status{min-height:20px;font-size:12px;color:#bed2e0;margin-top:3px}
+    .parity-pill{display:inline-block;border:1px solid #ffffff35;border-radius:999px;font-weight:800;font-size:12px;padding:3px 12px;background:#102638;color:#d7eef0;margin-bottom:4px}
+    .primary{width:100%;border:none;border-radius:14px;padding:16px 12px;background:linear-gradient(105deg,#81f2d9,#5bd3e7);color:#073145;font-size:18px;font-weight:900;box-shadow:0 8px 24px #3cdbce20}
+    .primary:not(:disabled):hover{filter:brightness(1.07)}
+    .batch-controls{border:1px solid #ffffff23;border-radius:18px;padding:13px;background:#14283eab}
+    .section-label{font-size:13px;font-weight:850;margin:0 0 10px}
+    .batch-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .batch{border:1px solid #5391a8;background:#21445b;color:#e4fbff;border-radius:12px;min-height:48px;font-weight:800;font-size:16px}
+    .batch:not(:disabled):hover{border-color:#8beddf;background:#275b69}
+    .batch small{display:block;font-size:10px;font-weight:550;color:#abd4dd;margin-top:2px}
+    .progress-line{display:flex;justify-content:space-between;gap:7px;margin:11px 0 7px;font-size:12px;color:#b1cad7}
+    .progress-line strong{color:#e1faff;font-variant-numeric:tabular-nums}
+    .progress-track{width:100%;height:7px;border-radius:50px;background:#092032;overflow:hidden}
+    .progress-fill{height:100%;width:0%;border-radius:inherit;background:linear-gradient(90deg,#4acaba,#8af1e9)}
+    .stats{background:#122339;border:1px solid #ffffff1f;padding:15px;border-radius:18px}
+    .stats-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px}
+    .stats-head h2{font-size:15px;margin:0}
+    .stats-head span{font-size:12px;color:#bad1de;font-variant-numeric:tabular-nums}
+    .parity-cards{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .parity-card{padding:10px 12px;border:1px solid #ffffff1a;border-radius:13px;background:#1d3348}
+    .parity-card .tag{font-size:12px;font-weight:850}
+    .parity-card.even .tag{color:var(--even)}
+    .parity-card.odd .tag{color:var(--odd)}
+    .parity-card .value{font-weight:900;font-size:30px;letter-spacing:-.035em;font-variant-numeric:tabular-nums;line-height:1.3;margin-top:2px}
+    .parity-card .percent{font-size:12px;color:#bfd3df;font-variant-numeric:tabular-nums}
+    .bar{height:13px;display:flex;overflow:hidden;border-radius:30px;background:#2f3c51;margin:12px 0 7px}
+    .bar-even{background:var(--even);transition:width .18s ease}
+    .bar-odd{background:var(--odd);transition:width .18s ease}
+    .bar-explainer{display:flex;justify-content:space-between;gap:7px;font-size:11px;color:#9fbacb}
+    .deviation{font-size:12px;color:#bdd4df;margin:10px 0 0;line-height:1.55}
+    .history{background:#122339;border:1px solid #ffffff1f;padding:13px 15px;border-radius:18px}
+    .history-head{display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:wrap}
+    .history-head h2{margin:0;font-size:14px}
+    .history-actions{display:flex;gap:7px}
+    .small-button{font-size:12px;color:#dcf4ff;border:1px solid #486f87;border-radius:9px;background:#1b3a50;padding:7px 10px}
+    .small-button:not(:disabled):hover{background:#27566b}
+    .history-list{display:flex;flex-wrap:wrap;gap:6px;max-height:125px;overflow:auto;list-style:none;padding:0;margin:11px 0 0}
+    .history-list li{background:#21445c;border:1px solid #3f6880;border-radius:8px;padding:6px 8px;font-size:12px;font-weight:800;white-space:nowrap}
+    .history-list li:first-child{background:#25615e;border-color:#6dd7bf}
+    .history-list .empty{background:none;border:0;color:#93b0c0;font-weight:400}
+    .footer{color:#8ca9ba;font-size:12px;margin-top:22px;line-height:1.8;text-align:center}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:790px){.shell{padding:19px 12px 30px}.grid{grid-template-columns:1fr;gap:12px;margin-top:16px}.wheel-card{padding:10px;border-radius:18px}.wheel-stage{max-width:510px}.live{margin:0 4px}.side{gap:10px}.winning{font-size:74px}.result{padding:10px}.note{margin:10px 8px 3px}}
+    @media(max-width:390px){.batch{font-size:14px}.batch-controls{padding:10px}.parity-card .value{font-size:26px}.pointer{border-left-width:12px;border-right-width:12px;border-top-width:34px}.pointer:before{top:-38px}}
+    @media(prefers-reduced-motion:reduce){.bar-even,.bar-odd{transition:none}}
+  </style>
+</head>
+<body>
+<main class="shell" id="app1024">
+  <header>
+    <div class="eyebrow">FAIR RANDOM WHEEL · 1024</div>
+    <h1>1024 공정 돌림판</h1>
+    <p class="subtitle">1~1024번 모두 당첨 확률은 <b>1/1024 (0.09765625%)</b> · 짝수/홀수 확률 각각 50%</p>
+  </header>
+  <div class="grid">
+    <section class="wheel-card" aria-label="1024개 동일 크기 구역의 회전하는 돌림판">
+      <div class="wheel-stage">
+        <canvas id="wheel" width="900" height="900" aria-label="1024개의 동일한 칸이 있는 돌림판"></canvas>
+        <div class="pointer" aria-hidden="true"></div>
+      </div>
+      <div class="live"><span>바늘이 가리키는 번호</span><strong id="live-index">1</strong></div>
+      <p class="note">실제 판은 1024개의 동일한 크기 칸입니다. 칸이 좁아 일부 번호만 표기하고, 바늘이 가리키는 정확한 번호는 위에 표시합니다.</p>
+    </section>
+    <div class="side">
+      <section class="result" aria-live="polite" aria-atomic="true">
+        <div class="result-label">최근 추첨 번호</div>
+        <div class="winning" id="winning">—</div>
+        <div class="parity-pill" id="winner-parity">추첨 전</div>
+        <div class="status" id="status">아래 버튼으로 돌림판을 시작하세요.</div>
+      </section>
+      <button id="spin-one" class="primary" type="button">↻ 1회 돌리기</button>
+      <section class="batch-controls" aria-label="자동 추첨">
+        <h2 class="section-label">자동 돌리기</h2>
+        <div class="batch-buttons">
+          <button class="batch" data-count="10" type="button">10회<small>자동 추첨</small></button>
+          <button class="batch" data-count="100" type="button">100회<small>자동 추첨</small></button>
+          <button class="batch" data-count="1024" type="button">1024회<small>자동 추첨</small></button>
+        </div>
+        <div class="progress-line"><span>실행 진행률</span><strong id="progress-label">대기 중</strong></div>
+        <div class="progress-track" role="progressbar" aria-label="추첨 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      </section>
+      <section class="stats" id="run-stats" aria-label="이번 실행 홀짝 통계">
+        <div class="stats-head"><h2>이번 실행 · 홀짝 통계</h2><span id="run-total">0회</span></div>
+        <div class="parity-cards">
+          <div class="parity-card even"><div class="tag">짝수 EVEN</div><div class="value" id="run-even">0</div><div class="percent" id="run-even-pct">0.0%</div></div>
+          <div class="parity-card odd"><div class="tag">홀수 ODD</div><div class="value" id="run-odd">0</div><div class="percent" id="run-odd-pct">0.0%</div></div>
+        </div>
+        <div class="bar" aria-label="이번 실행 짝수 홀수 비율"><div class="bar-even" id="run-even-bar"></div><div class="bar-odd" id="run-odd-bar"></div></div>
+        <div class="bar-explainer"><span>짝수 <span id="run-even-pct-2">0.0%</span></span><span>홀수 <span id="run-odd-pct-2">0.0%</span></span></div>
+        <p class="deviation" id="run-diff">추첨하면 이번 실행의 홀짝 비율이 표시됩니다.</p>
+      </section>
+      <section class="stats" id="all-stats" aria-label="전체 누적 홀짝 통계">
+        <div class="stats-head"><h2>전체 누적 통계</h2><span id="all-total">0회</span></div>
+        <div class="parity-cards">
+          <div class="parity-card even"><div class="tag">짝수 EVEN</div><div class="value" id="all-even">0</div><div class="percent" id="all-even-pct">0.0%</div></div>
+          <div class="parity-card odd"><div class="tag">홀수 ODD</div><div class="value" id="all-odd">0</div><div class="percent" id="all-odd-pct">0.0%</div></div>
+        </div>
+        <div class="bar" aria-label="전체 누적 짝수 홀수 비율"><div class="bar-even" id="all-even-bar"></div><div class="bar-odd" id="all-odd-bar"></div></div>
+        <div class="bar-explainer"><span>짝수 <span id="all-even-pct-2">0.0%</span></span><span>홀수 <span id="all-odd-pct-2">0.0%</span></span></div>
+      </section>
+      <section class="history" aria-label="추첨 기록">
+        <div class="history-head"><h2>최근 결과 <span id="history-count">(0회)</span></h2><div class="history-actions"><button id="download" type="button" class="small-button">CSV 저장</button><button id="reset" type="button" class="small-button">기록 초기화</button></div></div>
+        <ol class="history-list" id="history-list"><li class="empty">추첨 결과가 아직 없습니다.</li></ol>
+      </section>
+    </div>
+  </div>
+  <p class="footer">자동 추첨은 각 번호를 독립적으로 균등 추출합니다. 빠른 회전 화면은 시각화이며, 마지막 결과의 칸에 정확히 멈춥니다.<br>짝수·홀수는 확률이 각각 50%지만 실제 횟수는 달라질 수 있습니다. 데이터는 사용 중인 브라우저에만 저장됩니다.</p>
+</main>
+<script>
+(() => {
+  'use strict';
+  const N=1024, TAU=Math.PI*2, STEP=TAU/N;
+  const BASE=-Math.PI/2-STEP/2, STORAGE_KEY='fair-wheel-1024-local-v2';
+  const $=id=>document.getElementById(id);
+  const canvas=$('wheel'), ctx=canvas.getContext('2d');
+  const runButtons=[$('spin-one'),...document.querySelectorAll('button[data-count]')];
+  const resetButton=$('reset'), downloadButton=$('download');
+  const modulo=(x,m)=>((x%m)+m)%m;
+  let records=[],lastStart=0,evenTotal=0,evenRun=0,rotation=0,busy=false;
+  let lastShownIndex=-1;
+
+  // Rejection sampling removes modulo bias for every supported upper bound.
+  // In particular, 1024 divides 2^32, so all 1024 outcomes are exactly equilikely.
+  function secureInt(n){
+    if(!globalThis.crypto || !globalThis.crypto.getRandomValues){throw new Error('보안 난수를 지원하지 않는 환경입니다.');}
+    const v=new Uint32Array(1),limit=Math.floor(4294967296/n)*n;
+    do{globalThis.crypto.getRandomValues(v)}while(v[0]>=limit);
+    return v[0]%n;
+  }
+
+  function drawWheel(){
+    const C=450,R=401;
+    const colors=['#79eadf','#85c9fe','#c1b1fe','#f9aacd','#ffc196','#fbe19b','#9ee3ad','#92dbeb'];
+    ctx.clearRect(0,0,900,900);
+    ctx.beginPath();ctx.arc(C,C,R+17,0,TAU);ctx.fillStyle='#0b1c2d';ctx.fill();
+    ctx.beginPath();ctx.arc(C,C,R+12,0,TAU);ctx.lineWidth=8;ctx.strokeStyle='#4a6882';ctx.stroke();
+    for(let i=0;i<N;i++){
+      ctx.beginPath();ctx.moveTo(C,C);ctx.arc(C,C,R,BASE+i*STEP,BASE+(i+1)*STEP+.00005);ctx.closePath();
+      ctx.fillStyle=colors[i%colors.length];ctx.fill();
+    }
+    ctx.strokeStyle='#143a5699';ctx.lineWidth=1.5;
+    for(let i=0;i<N;i+=8){
+      let a=BASE+(i+.5)*STEP;
+      ctx.beginPath();ctx.moveTo(C+Math.cos(a)*(R-18),C+Math.sin(a)*(R-18));ctx.lineTo(C+Math.cos(a)*R,C+Math.sin(a)*R);ctx.stroke();
+    }
+    ctx.beginPath();ctx.arc(C,C,R,0,TAU);ctx.lineWidth=9;ctx.strokeStyle='#112b43';ctx.stroke();
+    ctx.beginPath();ctx.arc(C,C,R-8,0,TAU);ctx.lineWidth=2;ctx.strokeStyle='#ffffff50';ctx.stroke();
+    for(let i=0;i<N;i+=64){
+      const a=BASE+(i+.5)*STEP,x=C+Math.cos(a)*R*.72,y=C+Math.sin(a)*R*.72;
+      ctx.beginPath();ctx.arc(x,y,21,0,TAU);ctx.fillStyle='#122c44ef';ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='800 16px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(i+1),x,y);
+    }
+    ctx.beginPath();ctx.arc(C,C,46,0,TAU);ctx.fillStyle='#142d44';ctx.fill();
+    ctx.beginPath();ctx.arc(C,C,36,0,TAU);ctx.fillStyle='#63e7d5';ctx.fill();
+    ctx.beginPath();ctx.arc(C,C,20,0,TAU);ctx.fillStyle='#123b4f';ctx.fill();
+    ctx.beginPath();ctx.arc(C,C,6,0,TAU);ctx.fillStyle='#fff';ctx.fill();
+  }
+  function pointerIndex(angle){return modulo(Math.round(-angle/STEP),N);}
+  function showAngle(angle){
+    canvas.style.transform='rotate('+angle+'rad)';
+    const index=pointerIndex(angle);
+    if(index!==lastShownIndex){$('live-index').textContent=String(index+1);lastShownIndex=index;}
+  }
+
+  function load(){
+    try{
+      const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+      if(!data || !Array.isArray(data.records))return;
+      if(data.records.some(n=>!Number.isInteger(n)||n<1||n>N))return;
+      records=data.records;
+      lastStart=Number.isInteger(data.lastStart)?Math.max(0,Math.min(records.length,data.lastStart)):records.length;
+    }catch(_){/* localStorage can be disabled; the app still works. */}
+  }
+  function save(){
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({records,lastStart}));}
+    catch(_){/* Private browsing or quota limits must not affect draws. */}
+  }
+  function showWinner(number,final=false){
+    $('winning').textContent=String(number);
+    const odd=number%2===1;
+    const pill=$('winner-parity');pill.textContent=odd?'홀수 ODD':'짝수 EVEN';
+    pill.style.color=odd?'#e4d0ff':'#9ef3e6';
+    pill.style.borderColor=odd?'#b68aef':'#5ebcaf';
+    if(final)$('status').textContent=number+'번 당첨 · '+(odd?'홀수':'짝수');
+  }
+  function setProgress(done,total){
+    const p=total>0?Math.round(done/total*100):0;
+    $('progress-fill').style.width=p+'%';
+    $('progress-label').textContent=total?done.toLocaleString()+' / '+total.toLocaleString()+'회':'대기 중';
+    $('progress-bar').setAttribute('aria-valuenow',String(p));
+  }
+  function displayStats(prefix,total,even){
+    const odd=total-even,pE=total?even/total*100:0,pO=total?odd/total*100:0;
+    $(prefix+'-total').textContent=total.toLocaleString()+'회';
+    $(prefix+'-even').textContent=even.toLocaleString();
+    $(prefix+'-odd').textContent=odd.toLocaleString();
+    $(prefix+'-even-pct').textContent=pE.toFixed(1)+'%';
+    $(prefix+'-odd-pct').textContent=pO.toFixed(1)+'%';
+    $(prefix+'-even-pct-2').textContent=pE.toFixed(1)+'%';
+    $(prefix+'-odd-pct-2').textContent=pO.toFixed(1)+'%';
+    $(prefix+'-even-bar').style.width=pE+'%';
+    $(prefix+'-odd-bar').style.width=pO+'%';
+    if(prefix==='run'){
+      $('run-diff').textContent=total
+        ? '50:50 대비 짝수 비율 '+(pE-50>=0?'+':'')+(pE-50).toFixed(1)+'%p · 짝수와 홀수 차이 '+Math.abs(even-odd)+'회'
+        :'추첨하면 이번 실행의 홀짝 비율이 표시됩니다.';
+    }
+  }
+  function updateStats(){displayStats('run',records.length-lastStart,evenRun);displayStats('all',records.length,evenTotal);}
+  function renderHistory(){
+    $('history-count').textContent='('+records.length.toLocaleString()+'회)';
+    const list=$('history-list');list.replaceChildren();
+    if(!records.length){const li=document.createElement('li');li.className='empty';li.textContent='추첨 결과가 아직 없습니다.';list.appendChild(li);return;}
+    const fragment=document.createDocumentFragment();
+    for(let i=records.length-1;i>=Math.max(0,records.length-48);i--){
+      const li=document.createElement('li');li.textContent='#'+(i+1)+' · '+records[i]+(records[i]%2===0?' 짝':' 홀');fragment.appendChild(li);
+    }
+    list.appendChild(fragment);
+  }
+  function setBusy(value){
+    busy=value;runButtons.forEach(b=>b.disabled=value);
+    resetButton.disabled=value;downloadButton.disabled=value;
+  }
+  function startDraw(times){
+    if(busy)return;
+    let draws,turns,jitter;
+    try{
+      draws=Array.from({length:times},()=>secureInt(N)+1);
+      turns=(times===1?8:times===10?12:times===100?17:25)+secureInt(4);
+      jitter=((secureInt(65536)/65536)-.5)*STEP*.65;
+    }catch(error){$('status').textContent=error.message;return;}
+    const winner=draws[draws.length-1];
+    const target=modulo(-(winner-1)*STEP+jitter,TAU);
+    const travel=modulo(target-modulo(rotation,TAU),TAU);
+    const from=rotation,to=rotation+turns*TAU+travel;
+    const reduced=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const duration=reduced?900:(times===1?4500:times===10?3500:times===100?4000:5200);
+    const begin=performance.now();let completed=0;
+    lastStart=records.length;evenRun=0;
+    setBusy(true);setProgress(0,times);updateStats();
+    $('status').textContent=times.toLocaleString()+'회 추첨 진행 중…';
+    $('winning').textContent='···';$('winner-parity').textContent='진행 중';
+
+    function frame(now){
+      const time=Math.max(0,Math.min(1,(now-begin)/duration));
+      // The last frame must reveal every draw, even when frames are throttled.
+      const next=Math.min(times,Math.floor(times*time));
+      while(completed<next){
+        const number=draws[completed++];records.push(number);
+        if(number%2===0){evenTotal++;evenRun++;}
+      }
+      if(completed>0)showWinner(draws[completed-1]);
+      const eased=1-Math.pow(1-time,5);
+      showAngle(from+(to-from)*eased);
+      setProgress(completed,times);
+      updateStats();
+      if(time<1){requestAnimationFrame(frame);return;}
+      rotation=modulo(to,TAU);
+      showAngle(rotation);
+      if(pointerIndex(rotation)+1!==winner){
+        $('status').textContent='회전 표시 오류: 당첨 번호를 확인해 주세요.';
+      }else{showWinner(winner,true);$('status').textContent=times.toLocaleString()+'회 추첨 완료 · 마지막 번호 '+winner;}
+      save();renderHistory();setBusy(false);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function csv(){
+    if(busy||!records.length)return;
+    const rows=['추첨순서,번호,홀짝',...records.map((number,i)=>`${i+1},${number},${number%2===0?'짝수':'홀수'}`)];
+    const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');link.href=url;link.download='roulette_1024_results.csv';
+    document.body.appendChild(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }
+  load();drawWheel();showAngle(0);
+  evenTotal=records.reduce((count,n)=>count+(n%2===0?1:0),0);
+  evenRun=records.slice(lastStart).reduce((count,n)=>count+(n%2===0?1:0),0);
+  if(records.length){showWinner(records[records.length-1],true);$('status').textContent='이전 기록을 불러왔습니다.';}
+  updateStats();renderHistory();setProgress(0,0);
+  $('spin-one').addEventListener('click',()=>startDraw(1));
+  document.querySelectorAll('button[data-count]').forEach(b=>b.addEventListener('click',()=>startDraw(Number(b.dataset.count))));
+  resetButton.addEventListener('click',()=>{
+    if(busy)return;
+    records=[];lastStart=0;evenTotal=0;evenRun=0;save();
+    $('winning').textContent='—';$('winner-parity').textContent='추첨 전';$('winner-parity').removeAttribute('style');
+    $('status').textContent='기록이 초기화되었습니다.';
+    updateStats();renderHistory();setProgress(0,0);
+  });
+  downloadButton.addEventListener('click',csv);
+})();
+</script>
+</body>
+</html>
