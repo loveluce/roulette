@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1024 룰렛 (홀수/짝수)</title>
+<style>
+  body { margin: 0; font-family: -apple-system, sans-serif; background: #0f172a; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { background: #1e293b; padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; max-width: 420px; width: 90%; }
+  canvas { border-radius: 50%; border: 4px solid #334155; margin: 16px 0; }
+  .pointer { width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid #ef4444; margin: 0 auto -10px auto; }
+  .result { font-size: 22px; font-weight: bold; min-height: 32px; margin: 12px 0; }
+  .odd { color: #38bdf8; }
+  .even { color: #fb7185; }
+  button { background: #3b82f6; color: #fff; border: none; padding: 12px 28px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+  button:hover { background: #2563eb; }
+  button:disabled { background: #64748b; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>1024 룰렛 (홀/짝)</h2>
+  <div class="pointer"></div>
+  <canvas id="wheel" width="300" height="300"></canvas>
+  <div class="result" id="resultText">버튼을 눌러 돌려보세요</div>
+  <button id="spinBtn" onclick="spin()">돌리기 (SPIN)</button>
+</div>
+
+<script>
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const btn = document.getElementById('spinBtn');
+  const resultText = document.getElementById('resultText');
+  const total = 1024;
+  let angle = 0;
+  let isSpinning = false;
+
+  function drawWheel(currentAngle) {
+    ctx.clearRect(0, 0, 300, 300);
+    const cx = 150, cy = 150, r = 140;
+    const step = (Math.PI * 2) / total;
+
+    for (let i = 0; i < total; i++) {
+      const start = currentAngle + i * step;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, start, start + step);
+      ctx.fillStyle = (i % 2 === 0) ? '#38bdf8' : '#fb7185'; // 홀수/짝수 색상
+      ctx.fill();
+    }
+
+    // 중앙 원형 캡
+    ctx.beginPath();
+    ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+    ctx.fillStyle = '#0f172a';
+    ctx.fill();
+  }
+
+  function spin() {
+    if (isSpinning) return;
+    isSpinning = true;
+    btn.disabled = true;
+    resultText.textContent = "추첨 중...";
+
+    let speed = Math.random() * 0.4 + 0.5; // 초기 각속도
+    const friction = 0.988; // 감속 계수
+
+    function animate() {
+      angle += speed;
+      speed *= friction;
+      drawWheel(angle);
+
+      if (speed > 0.0008) {
+        requestAnimationFrame(animate);
+      } else {
+        isSpinning = false;
+        btn.disabled = false;
+        
+        // 12시 방향 화살표 기준 당첨 번호 계산 (화살표는 -90도 방향)
+        const normalized = ((-angle - Math.PI / 2) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+        const index = Math.floor((normalized / (Math.PI * 2)) * total) + 1;
+        const isEven = index % 2 === 0;
+
+        resultText.innerHTML = `당첨: <span class="${isEven ? 'even' : 'odd'}">${index}번 (${isEven ? '짝수' : '홀수'})</span>`;
+      }
+    }
+    animate();
+  }
+
+  drawWheel(0);
+</script>
+</body>
+</html>
